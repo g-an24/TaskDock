@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app
+spec:
+  replicas: 2 # Specify the number of replicas
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+        - name: flask-app
+          image: adityaojhalang/flask-app:v2 # Replace with your Docker Hub image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000 # Ensure this matches the port used in probes
+          env:
+            - name: FLASK_ENV
+              value: "development"
+            - name: MONGO_HOST
+              value: "mongodb"
+          livenessProbe:
+            tcpSocket:
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 1
+            
+  strategy: # Define the update strategy
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
